@@ -356,17 +356,35 @@
                     Cookies 是网站用来记住你登录状态的小文件。就像"会员卡"，告诉网站你已经登录了。
                 </p>
             </div>
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0 0 10px 0; color: #856404; font-size: 14px; font-weight: 600;">
+                    ⚠️ 重要：必须在${platformName}页面上操作！
+                </p>
+                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
+                    如果 <code>document.cookie</code> 返回空，说明你在错误的页面或Cookies是HttpOnly。请使用下面的方法。
+                </p>
+            </div>
             <p style="color: #666; margin-bottom: 15px; font-size: 14px; line-height: 1.6; font-weight: 600;">
-                请按以下步骤获取并保存 Cookies：
+                📋 方法1：使用 Application 标签（推荐，最简单）
             </p>
             <ol style="color: #666; margin-bottom: 20px; padding-left: 20px; font-size: 14px; line-height: 2.2;">
-                <li>在${platformName}登录页面，<strong>确保已经登录成功</strong></li>
-                <li>按 <code style="background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">F12</code> 打开开发者工具</li>
-                <li>点击 <strong>"Console"</strong> 标签（控制台）</li>
-                <li>在底部输入框输入：<code style="background: #fff3cd; padding: 2px 8px; border-radius: 4px; font-weight: 600;">document.cookie</code></li>
-                <li>按 <strong>回车</strong>，会显示一长串文本（这就是 Cookies）</li>
-                <li><strong>复制</strong>这串文本（全选后 Cmd+C 或 Ctrl+C）</li>
-                <li>粘贴到下方输入框中</li>
+                <li>在<strong>${platformName}页面</strong>（不是本页面）按 <code style="background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">F12</code></li>
+                <li>点击 <strong>"Application"</strong> 标签（如果没有，点击 <code>>></code> 查看更多）</li>
+                <li>左侧找到 <strong>"Cookies"</strong> → 展开 → 点击 <strong>"https://www.xiaohongshu.com"</strong></li>
+                <li>右侧会显示所有 Cookies（很多行）</li>
+                <li>手动拼接：格式为 <code>name1=value1; name2=value2; ...</code></li>
+                <li>复制所有内容，粘贴到下方输入框</li>
+            </ol>
+            <p style="color: #666; margin-bottom: 15px; font-size: 14px; line-height: 1.6; font-weight: 600;">
+                📋 方法2：使用 Network 标签（更简单）
+            </p>
+            <ol style="color: #666; margin-bottom: 20px; padding-left: 20px; font-size: 14px; line-height: 2.2;">
+                <li>在<strong>${platformName}页面</strong>按 <code style="background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">F12</code></li>
+                <li>点击 <strong>"Network"</strong> 标签</li>
+                <li>刷新页面（<code>Cmd+R</code> 或 <code>Ctrl+R</code>）</li>
+                <li>点击任意一个请求（通常选择第一个）</li>
+                <li>在右侧 <strong>"Headers"</strong> 中找到 <code>Cookie:</code> 字段</li>
+                <li>复制 Cookie 的值（完整的一串），粘贴到下方输入框</li>
             </ol>
             <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
                 <p style="margin: 0 0 8px 0; color: #2e7d32; font-size: 13px; line-height: 1.6; font-weight: 600;">
