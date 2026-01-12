@@ -50,15 +50,25 @@
     detectAPIPort();
     
     // ========== 检查是否已添加 ==========
-    if (document.getElementById('crawler-search-container')) {
+    const existingContainer = document.getElementById('crawler-search-container');
+    if (existingContainer && existingContainer.innerHTML.trim().length > 0) {
         console.log('搜索接口已存在，跳过添加');
         return;
     }
     
+    // 如果容器存在但是空的，清空它以便重新添加
+    if (existingContainer) {
+        existingContainer.innerHTML = '';
+    }
+    
     // ========== 创建搜索接口 ==========
     function createSearchInterface() {
-        const container = document.createElement('div');
-        container.id = 'crawler-search-container';
+        // 先检查容器是否存在
+        let container = document.getElementById('crawler-search-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'crawler-search-container';
+        }
         container.style.cssText = `
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 30px;
@@ -186,16 +196,28 @@
         `;
         
         // 添加到页面
-        const mainContent = document.querySelector('.container') || document.body;
-        const header = document.querySelector('.header');
-        if (header && header.nextSibling) {
-            mainContent.insertBefore(container, header.nextSibling);
+        const targetContainer = document.getElementById('crawler-search-container');
+        if (targetContainer) {
+            // 如果容器已存在，直接填充内容
+            targetContainer.innerHTML = container.innerHTML;
+            targetContainer.style.cssText = container.style.cssText;
+            // 重新获取表单元素并绑定事件
+            const form = document.getElementById('crawlSearchForm');
+            if (form) {
+                form.addEventListener('submit', handleCrawlSearch);
+            }
         } else {
-            mainContent.insertBefore(container, mainContent.firstChild);
+            // 如果容器不存在，创建并插入
+            const mainContent = document.querySelector('.container') || document.body;
+            const header = document.querySelector('.header');
+            if (header && header.nextSibling) {
+                mainContent.insertBefore(container, header.nextSibling);
+            } else {
+                mainContent.insertBefore(container, mainContent.firstChild);
+            }
+            // 绑定事件
+            document.getElementById('crawlSearchForm').addEventListener('submit', handleCrawlSearch);
         }
-        
-        // 绑定事件
-        document.getElementById('crawlSearchForm').addEventListener('submit', handleCrawlSearch);
         
         // 按钮悬停效果
         const btn = document.getElementById('crawlSubmitBtn');
