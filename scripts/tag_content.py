@@ -58,8 +58,8 @@ def process_content(raw_content):
     profile = {
         'content_id': raw_content['id'],
         'category': tag_category(text),
-        'price_range': tag_price_range(text),
-        'scenarios': tag_scenario(text),
+        'price_band': tag_price_range(text),
+        'scenario': tag_scenario(text),
         'style': tag_style(text),
         'sentiment_score': tag_emotion(text),
         'tagged_at': datetime.utcnow().isoformat()
