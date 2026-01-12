@@ -61,7 +61,7 @@ def process_content(raw_content):
         'price_range': tag_price_range(text),
         'scenarios': tag_scenario(text),
         'style': tag_style(text),
-        'emotion': tag_emotion(text),
+        'sentiment_score': tag_emotion(text),
         'keywords': extract_keywords(text)[:10],  # Top 10 keywords
         'tagged_at': datetime.utcnow().isoformat()
     }
