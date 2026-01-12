@@ -112,13 +112,16 @@
             window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey)
         }
         // 使用已存在的supabaseClient，避免重复声明
-        const supabase = window.supabaseClient
+        // 直接使用window.supabaseClient，不声明新变量
+        if (!window.supabase) {
+            window.supabase = window.supabaseClient;
+        }
 
         let platformChart, trendChart;
 
         async function loadData() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await (window.supabase || window.supabaseClient)
                     .from('content_raw')
                     .select('*')
                     .order('created_at', { ascending: false })
