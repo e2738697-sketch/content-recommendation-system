@@ -119,16 +119,93 @@
 
         let platformChart, trendChart;
 
+        // 保存爬取数据到页面的函数（供inject_to_webpage.js调用）
+        window.saveCrawlDataToPage = function(notes, keyword) {
+            try {
+                console.log('保存爬取数据到页面:', notes.length, '条');
+                
+                // 转换数据格式以匹配页面显示
+                const formattedData = notes.map(note => {
+                    // 处理多种可能的数据格式
+                    const platform = note.platform || 'xiaohongshu';
+                    const id = note.note_id || note.id || note.noteId || 'N/A';
+                    const title = note.title || note.desc || '无标题';
+                    const desc = note.desc || note.description || '';
+                    const nickname = note.nickname || note.author || '未知';
+                    const time = note.time || note.publish_time || note.created_at || new Date().toISOString();
+                    const liked_count = note.liked_count || note.likes || 0;
+                    const comment_count = note.comment_count || note.comments || 0;
+                    const collected_count = note.collected_count || note.collections || 0;
+                    const share_count = note.share_count || note.shares || 0;
+                    
+                    return {
+                        platform: platform,
+                        id: id,
+                        note_id: id,
+                        title: title,
+                        desc: desc,
+                        nickname: nickname,
+                        created_at: time,
+                        publish_time: time,
+                        time: time,
+                        liked_count: liked_count,
+                        likes: liked_count,
+                        comment_count: comment_count,
+                        comments: comment_count,
+                        collected_count: collected_count,
+                        collections: collected_count,
+                        share_count: share_count,
+                        shares: share_count,
+                        raw_data: note // 保存原始数据
+                    };
+                });
+                
+                // 获取现有数据
+                const existingData = JSON.parse(localStorage.getItem('crawled_data') || '[]');
+                
+                // 合并新数据（去重）
+                const existingIds = new Set(existingData.map(d => d.id || d.note_id));
+                const newData = formattedData.filter(d => !existingIds.has(d.id || d.note_id));
+                
+                // 合并并保存
+                const allData = [...existingData, ...newData];
+                localStorage.setItem('crawled_data', JSON.stringify(allData));
+                
+                console.log(`✅ 已保存 ${newData.length} 条新数据，总计 ${allData.length} 条`);
+                
+                // 立即刷新显示
+                loadData();
+            } catch (error) {
+                console.error('保存数据失败:', error);
+            }
+        };
+
         async function loadData() {
             try {
+                console.log('开始加载数据...');
+                
                 // 优先从localStorage加载爬取的数据
-                const localData = JSON.parse(localStorage.getItem('crawled_data') || '[]');
-                if (localData && localData.length > 0) {
-                    console.log(`从本地存储加载 ${localData.length} 条数据`);
+                let localData = [];
+                try {
+                    const localDataStr = localStorage.getItem('crawled_data');
+                    if (localDataStr) {
+                        localData = JSON.parse(localDataStr);
+                        console.log(`从localStorage读取到 ${localData.length} 条数据`);
+                    }
+                } catch (e) {
+                    console.warn('解析localStorage数据失败:', e);
+                    localStorage.removeItem('crawled_data'); // 清除损坏的数据
+                }
+                
+                if (localData && Array.isArray(localData) && localData.length > 0) {
+                    console.log(`✅ 使用本地存储的 ${localData.length} 条数据`);
                     updateStats(localData);
                     updateCharts(localData);
                     updateTable(localData);
-                    document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                    const lastUpdateEl = document.getElementById('lastUpdate');
+                    if (lastUpdateEl) {
+                        lastUpdateEl.textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                    }
                     return; // 有本地数据就不加载Supabase了
                 }
                 
@@ -136,22 +213,32 @@
                 try {
                     const supabaseClient = window.supabase || window.supabaseClient;
                     if (supabaseClient && typeof supabaseClient.from === 'function') {
+                        console.log('尝试从Supabase加载数据...');
                         const { data, error } = await supabaseClient
                             .from('content_raw')
                             .select('*')
                             .order('created_at', { ascending: false });
                         
-                        if (!error && data && data.length > 0) {
-                            console.log(`从Supabase加载 ${data.length} 条数据`);
+                        if (!error && data && Array.isArray(data) && data.length > 0) {
+                            console.log(`✅ 从Supabase加载 ${data.length} 条数据`);
                             updateStats(data);
                             updateCharts(data);
                             updateTable(data);
-                            document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                            const lastUpdateEl = document.getElementById('lastUpdate');
+                            if (lastUpdateEl) {
+                                lastUpdateEl.textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                            }
                             return;
+                        } else if (error) {
+                            console.warn('Supabase查询错误:', error);
+                        } else {
+                            console.log('Supabase中没有数据');
                         }
+                    } else {
+                        console.log('Supabase客户端未初始化或不可用');
                     }
                 } catch (supabaseError) {
-                    console.log('Supabase加载失败:', supabaseError.message);
+                    console.log('Supabase加载失败（这是正常的，如果未配置）:', supabaseError.message);
                 }
                 
                 // 如果都没有数据，显示空状态
@@ -159,13 +246,20 @@
                 updateStats([]);
                 updateCharts([]);
                 updateTable([]);
-                document.getElementById('lastUpdate').textContent = '最后更新: 暂无数据';
+                const lastUpdateEl = document.getElementById('lastUpdate');
+                if (lastUpdateEl) {
+                    lastUpdateEl.textContent = '最后更新: 暂无数据';
+                }
             } catch (error) {
                 console.error('加载数据失败:', error);
                 // 即使出错也显示空状态
                 updateStats([]);
                 updateCharts([]);
                 updateTable([]);
+                const lastUpdateEl = document.getElementById('lastUpdate');
+                if (lastUpdateEl) {
+                    lastUpdateEl.textContent = '最后更新: 加载失败';
+                }
             }
         }
 
@@ -174,29 +268,67 @@
                 data = [];
             }
             
-            const xhsData = data.filter(d => d && d.platform === 'xiaohongshu')
-            const douyinData = data.filter(d => d && d.platform === 'douyin')
+            const xhsData = data.filter(d => {
+                if (!d) return false;
+                const platform = d.platform || d.source || '';
+                return platform === 'xiaohongshu' || platform === 'xhs' || platform.includes('小红书');
+            });
+            const douyinData = data.filter(d => {
+                if (!d) return false;
+                const platform = d.platform || d.source || '';
+                return platform === 'douyin' || platform === '抖音';
+            });
             
             const totalCountEl = document.getElementById('totalCount');
             const xhsCountEl = document.getElementById('xhsCount');
             const douyinCountEl = document.getElementById('douyinCount');
             const latestTimeEl = document.getElementById('latestTime');
             
-            if (totalCountEl) totalCountEl.textContent = data.length || 0;
-            if (xhsCountEl) xhsCountEl.textContent = xhsData.length || 0;
-            if (douyinCountEl) douyinCountEl.textContent = douyinData.length || 0;
+            if (totalCountEl) {
+                totalCountEl.textContent = data.length || 0;
+                totalCountEl.style.color = data.length > 0 ? '#333' : '#999';
+            }
+            if (xhsCountEl) {
+                xhsCountEl.textContent = xhsData.length || 0;
+                xhsCountEl.style.color = xhsData.length > 0 ? '#333' : '#999';
+            }
+            if (douyinCountEl) {
+                douyinCountEl.textContent = douyinData.length || 0;
+                douyinCountEl.style.color = douyinData.length > 0 ? '#333' : '#999';
+            }
             
-            if (data.length > 0 && data[0].created_at) {
-                try {
-                    const latest = new Date(data[0].created_at);
-                    if (latestTimeEl) {
-                        latestTimeEl.textContent = latest.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            if (data.length > 0) {
+                // 尝试多种时间字段
+                const timeField = data[0].created_at || data[0].publish_time || data[0].time || data[0].timestamp;
+                if (timeField) {
+                    try {
+                        const latest = new Date(timeField);
+                        if (!isNaN(latest.getTime()) && latestTimeEl) {
+                            latestTimeEl.textContent = latest.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                            latestTimeEl.style.color = '#333';
+                        } else {
+                            if (latestTimeEl) {
+                                latestTimeEl.textContent = '--';
+                                latestTimeEl.style.color = '#999';
+                            }
+                        }
+                    } catch (e) {
+                        if (latestTimeEl) {
+                            latestTimeEl.textContent = '--';
+                            latestTimeEl.style.color = '#999';
+                        }
                     }
-                } catch (e) {
-                    if (latestTimeEl) latestTimeEl.textContent = '--';
+                } else {
+                    if (latestTimeEl) {
+                        latestTimeEl.textContent = '--';
+                        latestTimeEl.style.color = '#999';
+                    }
                 }
             } else {
-                if (latestTimeEl) latestTimeEl.textContent = '--';
+                if (latestTimeEl) {
+                    latestTimeEl.textContent = '暂无数据';
+                    latestTimeEl.style.color = '#999';
+                }
             }
         }
 
