@@ -156,16 +156,52 @@
         
         for (const platform of platforms) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/login/status?platform=${platform}`);
+                // 如果是GitHub Pages环境，API_BASE_URL可能是localhost，需要特殊处理
+                let apiUrl = API_BASE_URL;
+                if (window.location.hostname.includes('github.io')) {
+                    // GitHub Pages环境，无法访问本地API，使用localStorage检查
+                    const localStatus = localStorage.getItem(`${platform}_login_status`);
+                    if (localStatus) {
+                        try {
+                            const status = JSON.parse(localStatus);
+                            if (status.logged_in) {
+                                updateLoginStatus(platform, true, status);
+                                continue;
+                            }
+                        } catch (e) {
+                            console.log(`解析${platform}本地登录状态失败:`, e);
+                        }
+                    }
+                    updateLoginStatus(platform, false);
+                    continue;
+                }
+                
+                const response = await fetch(`${apiUrl}/api/login/status?platform=${platform}`);
                 const result = await response.json();
                 
                 if (result.success && result.data.logged_in) {
                     updateLoginStatus(platform, true, result.data);
+                    // 同时保存到localStorage
+                    localStorage.setItem(`${platform}_login_status`, JSON.stringify(result.data));
                 } else {
                     updateLoginStatus(platform, false);
+                    localStorage.removeItem(`${platform}_login_status`);
                 }
             } catch (error) {
                 console.log(`${platform}登录状态检查失败:`, error);
+                // 尝试从localStorage读取
+                const localStatus = localStorage.getItem(`${platform}_login_status`);
+                if (localStatus) {
+                    try {
+                        const status = JSON.parse(localStatus);
+                        if (status.logged_in) {
+                            updateLoginStatus(platform, true, status);
+                            continue;
+                        }
+                    } catch (e) {
+                        // 忽略解析错误
+                    }
+                }
                 updateLoginStatus(platform, false);
             }
         }
@@ -177,6 +213,13 @@
         const loginBtn = document.getElementById(`${platform}-login-btn`);
         const logoutBtn = document.getElementById(`${platform}-logout-btn`);
         
+        // 确保元素存在
+        if (!statusEl || !loginBtn) {
+            console.warn(`${platform}登录状态元素未找到，延迟更新`);
+            setTimeout(() => updateLoginStatus(platform, isLoggedIn, loginData), 500);
+            return;
+        }
+        
         if (isLoggedIn) {
             statusEl.textContent = '✅ 已登录';
             statusEl.style.background = '#d4edda';
@@ -184,7 +227,16 @@
             loginBtn.textContent = '✅ 已登录';
             loginBtn.disabled = true;
             loginBtn.style.opacity = '0.6';
-            logoutBtn.style.display = 'block';
+            loginBtn.style.cursor = 'not-allowed';
+            if (logoutBtn) {
+                logoutBtn.style.display = 'block';
+            }
+            
+            // 显示登录时间
+            if (loginData && loginData.login_time) {
+                const loginTime = new Date(loginData.login_time).toLocaleString('zh-CN');
+                statusEl.title = `登录时间: ${loginTime}`;
+            }
         } else {
             statusEl.textContent = '❌ 未登录';
             statusEl.style.background = '#f8d7da';
@@ -192,7 +244,11 @@
             loginBtn.textContent = platform === 'xhs' ? '🔑 登录小红书' : '🔑 登录抖音';
             loginBtn.disabled = false;
             loginBtn.style.opacity = '1';
-            logoutBtn.style.display = 'none';
+            loginBtn.style.cursor = 'pointer';
+            if (logoutBtn) {
+                logoutBtn.style.display = 'none';
+            }
+            statusEl.title = '';
         }
     }
     
@@ -360,7 +416,23 @@
                 if (result.success) {
                     showMessage(`✅ ${platformName}登录状态已保存`, 'success');
                     document.body.removeChild(dialog);
-                    checkLoginStatus();
+                    
+                    // 保存到localStorage
+                    const loginData = {
+                        logged_in: true,
+                        login_time: new Date().toISOString(),
+                        cookies: cookiesObj,
+                        user_info: {}
+                    };
+                    localStorage.setItem(`${platform}_login_status`, JSON.stringify(loginData));
+                    
+                    // 立即更新界面
+                    updateLoginStatus(platform, true, loginData);
+                    
+                    // 再次检查服务器状态
+                    setTimeout(() => {
+                        checkLoginStatus();
+                    }, 500);
                 } else {
                     showMessage(`保存失败: ${result.message}`, 'error');
                 }
@@ -395,7 +467,17 @@
             
             if (result.success) {
                 showMessage(`✅ ${platformName}登录状态已清除`, 'success');
-                checkLoginStatus();
+                
+                // 清除localStorage
+                localStorage.removeItem(`${platform}_login_status`);
+                
+                // 立即更新界面
+                updateLoginStatus(platform, false);
+                
+                // 再次检查服务器状态
+                setTimeout(() => {
+                    checkLoginStatus();
+                }, 500);
             } else {
                 showMessage(`清除失败: ${result.message}`, 'error');
             }
@@ -429,11 +511,22 @@
         }, 3000);
     }
     
-    // 初始化
+    // 初始化 - 确保在DOM完全加载后执行
+    function init() {
+        // 等待一小段时间确保DOM完全渲染
+        setTimeout(() => {
+            createLoginInterface();
+            // 延迟检查登录状态，确保界面已创建
+            setTimeout(() => {
+                checkLoginStatus();
+            }, 500);
+        }, 100);
+    }
+    
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createLoginInterface);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        createLoginInterface();
+        init();
     }
     
     console.log('✅ 登录管理界面已加载');
