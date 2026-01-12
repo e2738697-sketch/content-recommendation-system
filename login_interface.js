@@ -378,14 +378,26 @@
             <p style="color: #666; margin-bottom: 15px; font-size: 14px; line-height: 1.6; font-weight: 600;">
                 📋 方法2：使用 Network 标签（更简单）
             </p>
+            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6; font-weight: 600;">
+                    ⚠️ 重要：Cookie 在 Request Headers 中，不在 Response Headers 中！
+                </p>
+            </div>
             <ol style="color: #666; margin-bottom: 20px; padding-left: 20px; font-size: 14px; line-height: 2.2;">
                 <li>在<strong>${platformName}页面</strong>按 <code style="background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">F12</code></li>
                 <li>点击 <strong>"Network"</strong> 标签</li>
-                <li>刷新页面（<code>Cmd+R</code> 或 <code>Ctrl+R</code>）</li>
-                <li>点击任意一个请求（通常选择第一个）</li>
-                <li>在右侧 <strong>"Headers"</strong> 中找到 <code>Cookie:</code> 字段</li>
-                <li>复制 Cookie 的值（完整的一串），粘贴到下方输入框</li>
+                <li><strong>刷新页面</strong>（<code>Cmd+R</code> 或 <code>Ctrl+R</code>）生成新请求</li>
+                <li>点击左侧列表中的<strong>任意一个请求</strong>（推荐选择第一个或最大的）</li>
+                <li>在右侧点击 <strong>"Headers"</strong> 标签</li>
+                <li>找到 <strong>"Request Headers"</strong> 部分（不是Response Headers！）</li>
+                <li>在 Request Headers 中找到 <code style="background: #fff3cd; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Cookie:</code> 字段</li>
+                <li>复制 Cookie 的值（完整的一串，通常很长），粘贴到下方输入框</li>
             </ol>
+            <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+                <p style="margin: 0; color: #1976d2; font-size: 13px; line-height: 1.6;">
+                    💡 <strong>提示</strong>：如果找不到 Cookie 字段，可以按 <code>Cmd+F</code> (Mac) 或 <code>Ctrl+F</code> (Windows) 搜索 "Cookie"
+                </p>
+            </div>
             <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
                 <p style="margin: 0 0 8px 0; color: #2e7d32; font-size: 13px; line-height: 1.6; font-weight: 600;">
                     💡 <strong>提示</strong>：
