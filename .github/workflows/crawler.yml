@@ -31,7 +31,7 @@ jobs:
       
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crawler-logs
           path: logs/*.log
@@ -60,7 +60,7 @@ jobs:
         
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crawler-logs
           path: logs/*.log
