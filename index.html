@@ -315,6 +315,7 @@
             });
             
             const totalCountEl = document.getElementById('totalCount');
+            const totalDeltaEl = document.getElementById('totalDelta');
             const xhsCountEl = document.getElementById('xhsCount');
             const douyinCountEl = document.getElementById('douyinCount');
             const latestTimeEl = document.getElementById('latestTime');
@@ -323,6 +324,17 @@
                 totalCountEl.textContent = data.length || 0;
                 totalCountEl.style.color = data.length > 0 ? '#333' : '#999';
             }
+            
+            if (totalDeltaEl) {
+                if (data.length > 0) {
+                    totalDeltaEl.textContent = `共 ${data.length} 条内容`;
+                    totalDeltaEl.style.color = '#10b981';
+                } else {
+                    totalDeltaEl.textContent = '暂无数据';
+                    totalDeltaEl.style.color = '#999';
+                }
+            }
+            
             if (xhsCountEl) {
                 xhsCountEl.textContent = xhsData.length || 0;
                 xhsCountEl.style.color = xhsData.length > 0 ? '#333' : '#999';
