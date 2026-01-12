@@ -62,6 +62,24 @@
                         🔑 登录小红书
                     </button>
                     <button 
+                        id="xhs-save-cookies-btn"
+                        style="
+                            width: 100%; 
+                            margin-top: 10px;
+                            padding: 10px; 
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white; 
+                            border: none; 
+                            border-radius: 8px; 
+                            font-size: 13px; 
+                            font-weight: 500;
+                            cursor: pointer;
+                            display: block;
+                        "
+                    >
+                        💾 保存Cookies
+                    </button>
+                    <button 
                         id="xhs-logout-btn"
                         style="
                             width: 100%; 
@@ -106,6 +124,24 @@
                         onmouseout="this.style.transform='translateY(0)'"
                     >
                         🔑 登录抖音
+                    </button>
+                    <button 
+                        id="douyin-save-cookies-btn"
+                        style="
+                            width: 100%; 
+                            margin-top: 10px;
+                            padding: 10px; 
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white; 
+                            border: none; 
+                            border-radius: 8px; 
+                            font-size: 13px; 
+                            font-weight: 500;
+                            cursor: pointer;
+                            display: block;
+                        "
+                    >
+                        💾 保存Cookies
                     </button>
                     <button 
                         id="douyin-logout-btn"
@@ -263,6 +299,11 @@
             clearLogin('xhs');
         });
         
+        // 小红书保存Cookies按钮
+        document.getElementById('xhs-save-cookies-btn').addEventListener('click', () => {
+            showSaveCookiesDialog('xhs');
+        });
+        
         // 抖音登录
         document.getElementById('douyin-login-btn').addEventListener('click', () => {
             startLogin('douyin');
@@ -270,6 +311,11 @@
         
         document.getElementById('douyin-logout-btn').addEventListener('click', () => {
             clearLogin('douyin');
+        });
+        
+        // 抖音保存Cookies按钮
+        document.getElementById('douyin-save-cookies-btn').addEventListener('click', () => {
+            showSaveCookiesDialog('douyin');
         });
     }
     
@@ -333,7 +379,15 @@
     // 显示保存cookies对话框
     function showSaveCookiesDialog(platform) {
         const platformName = platform === 'xhs' ? '小红书' : '抖音';
+        
+        // 如果对话框已存在，先移除
+        const existingDialog = document.getElementById('save-cookies-dialog');
+        if (existingDialog) {
+            existingDialog.remove();
+        }
+        
         const dialog = document.createElement('div');
+        dialog.id = 'save-cookies-dialog';
         dialog.style.cssText = `
             position: fixed;
             top: 50%;
@@ -344,8 +398,10 @@
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             z-index: 10000;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         `;
         
         dialog.innerHTML = `
@@ -486,7 +542,9 @@
                 
                 if (result.success) {
                     showMessage(`✅ ${platformName}登录状态已保存`, 'success');
-                    document.body.removeChild(dialog);
+                    if (dialog.parentNode) {
+                        dialog.parentNode.removeChild(dialog);
+                    }
                     
                     // 保存到localStorage
                     const loginData = {
@@ -519,7 +577,9 @@
                 localStorage.setItem(`${platform}_login_status`, JSON.stringify(loginData));
                 
                 showMessage(`✅ ${platformName}登录状态已保存到本地（API不可用）`, 'success');
-                document.body.removeChild(dialog);
+                if (dialog.parentNode) {
+                    dialog.parentNode.removeChild(dialog);
+                }
                 
                 // 立即更新界面
                 updateLoginStatus(platform, true, loginData);
@@ -530,8 +590,30 @@
         });
         
         document.getElementById('cancel-save-btn').addEventListener('click', () => {
-            document.body.removeChild(dialog);
+            if (dialog.parentNode) {
+                dialog.parentNode.removeChild(dialog);
+            }
         });
+        
+        // 点击背景关闭对话框
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                if (dialog.parentNode) {
+                    dialog.parentNode.removeChild(dialog);
+                }
+            }
+        });
+        
+        // ESC键关闭对话框
+        const escHandler = (e) => {
+            if (e.key === 'Escape' && document.getElementById('save-cookies-dialog')) {
+                if (dialog.parentNode) {
+                    dialog.parentNode.removeChild(dialog);
+                }
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
     }
     
     // 清除登录
