@@ -350,15 +350,29 @@
         
         dialog.innerHTML = `
             <h3 style="margin: 0 0 15px 0; color: #333;">保存${platformName}登录状态</h3>
-            <p style="color: #666; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
-                登录完成后，请按以下步骤保存登录状态：
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+                <p style="margin: 0 0 10px 0; color: #1976d2; font-weight: 600; font-size: 14px;">🍪 什么是 Cookies？</p>
+                <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.6;">
+                    Cookies 是网站用来记住你登录状态的小文件。就像"会员卡"，告诉网站你已经登录了。
+                </p>
+            </div>
+            <p style="color: #666; margin-bottom: 15px; font-size: 14px; line-height: 1.6; font-weight: 600;">
+                请按以下步骤获取并保存 Cookies：
             </p>
-            <ol style="color: #666; margin-bottom: 20px; padding-left: 20px; font-size: 14px; line-height: 2;">
-                <li>在${platformName}页面按F12打开开发者工具</li>
-                <li>在Console中执行：<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">document.cookie</code></li>
-                <li>复制输出的cookies内容</li>
+            <ol style="color: #666; margin-bottom: 20px; padding-left: 20px; font-size: 14px; line-height: 2.2;">
+                <li>在${platformName}登录页面，<strong>确保已经登录成功</strong></li>
+                <li>按 <code style="background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">F12</code> 打开开发者工具</li>
+                <li>点击 <strong>"Console"</strong> 标签（控制台）</li>
+                <li>在底部输入框输入：<code style="background: #fff3cd; padding: 2px 8px; border-radius: 4px; font-weight: 600;">document.cookie</code></li>
+                <li>按 <strong>回车</strong>，会显示一长串文本（这就是 Cookies）</li>
+                <li><strong>复制</strong>这串文本（全选后 Cmd+C 或 Ctrl+C）</li>
                 <li>粘贴到下方输入框中</li>
             </ol>
+            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
+                    💡 <strong>提示</strong>：Cookies 通常很长，包含很多字符。如果复制后输入框显示为空，可能是复制失败，请重新复制。
+                </p>
+            </div>
             <textarea 
                 id="cookies-input" 
                 placeholder="粘贴cookies内容..."
