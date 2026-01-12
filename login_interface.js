@@ -130,12 +130,17 @@
             <div id="login-status-message" style="margin-top: 15px; display: none;"></div>
         `;
         
-        // 添加到页面（在搜索接口之后）
-        const searchContainer = document.getElementById('crawler-search-container');
-        if (searchContainer && searchContainer.parentNode) {
-            searchContainer.parentNode.insertBefore(container, searchContainer.nextSibling);
+        // 添加到页面（优先添加到header之后，如果没有header则添加到body开头）
+        const header = document.querySelector('.header');
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(container, header.nextSibling);
         } else {
-            document.body.insertBefore(container, document.body.firstChild);
+            const body = document.body || document.documentElement;
+            if (body.firstChild) {
+                body.insertBefore(container, body.firstChild);
+            } else {
+                body.appendChild(container);
+            }
         }
         
         // 绑定事件
