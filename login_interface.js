@@ -368,10 +368,15 @@
                 <li><strong>复制</strong>这串文本（全选后 Cmd+C 或 Ctrl+C）</li>
                 <li>粘贴到下方输入框中</li>
             </ol>
-            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
-                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
-                    💡 <strong>提示</strong>：Cookies 通常很长，包含很多字符。如果复制后输入框显示为空，可能是复制失败，请重新复制。
+            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
+                <p style="margin: 0 0 8px 0; color: #2e7d32; font-size: 13px; line-height: 1.6; font-weight: 600;">
+                    💡 <strong>提示</strong>：
                 </p>
+                <ul style="margin: 0; padding-left: 20px; color: #2e7d32; font-size: 13px; line-height: 1.8;">
+                    <li>Cookies 通常很长，包含很多字符</li>
+                    <li>如果复制后输入框显示为空，可能是复制失败，请重新复制</li>
+                    <li><strong>推荐</strong>：直接在 Console 输入 <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">document.cookie</code>，不需要粘贴</li>
+                </ul>
             </div>
             <textarea 
                 id="cookies-input" 
