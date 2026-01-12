@@ -123,15 +123,16 @@
             try {
                 // 优先从localStorage加载爬取的数据
                 const localData = JSON.parse(localStorage.getItem('crawled_data') || '[]');
-                if (localData.length > 0) {
+                if (localData && localData.length > 0) {
                     console.log(`从本地存储加载 ${localData.length} 条数据`);
                     updateStats(localData);
                     updateCharts(localData);
                     updateTable(localData);
                     document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                    return; // 有本地数据就不加载Supabase了
                 }
                 
-                // 尝试从Supabase加载（如果配置了且可用）
+                // 如果没有本地数据，尝试从Supabase加载
                 try {
                     const supabaseClient = window.supabase || window.supabaseClient;
                     if (supabaseClient && typeof supabaseClient.from === 'function') {
@@ -141,73 +142,122 @@
                             .order('created_at', { ascending: false });
                         
                         if (!error && data && data.length > 0) {
+                            console.log(`从Supabase加载 ${data.length} 条数据`);
                             updateStats(data);
                             updateCharts(data);
                             updateTable(data);
                             document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                            return;
                         }
                     }
                 } catch (supabaseError) {
-                    console.log('Supabase加载失败，使用本地数据:', supabaseError.message);
+                    console.log('Supabase加载失败:', supabaseError.message);
                 }
+                
+                // 如果都没有数据，显示空状态
+                console.log('没有找到数据，显示空状态');
+                updateStats([]);
+                updateCharts([]);
+                updateTable([]);
+                document.getElementById('lastUpdate').textContent = '最后更新: 暂无数据';
             } catch (error) {
                 console.error('加载数据失败:', error);
+                // 即使出错也显示空状态
+                updateStats([]);
+                updateCharts([]);
+                updateTable([]);
             }
         }
 
         function updateStats(data) {
-            const xhsData = data.filter(d => d.platform === 'xiaohongshu')
-            const douyinData = data.filter(d => d.platform === 'douyin')
+            if (!data || !Array.isArray(data)) {
+                data = [];
+            }
             
-            document.getElementById('totalCount').textContent = data.length
-            document.getElementById('xhsCount').textContent = xhsData.length
-            document.getElementById('douyinCount').textContent = douyinData.length
+            const xhsData = data.filter(d => d && d.platform === 'xiaohongshu')
+            const douyinData = data.filter(d => d && d.platform === 'douyin')
             
-            if (data.length > 0) {
-                const latest = new Date(data[0].created_at)
-                document.getElementById('latestTime').textContent = latest.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            const totalCountEl = document.getElementById('totalCount');
+            const xhsCountEl = document.getElementById('xhsCount');
+            const douyinCountEl = document.getElementById('douyinCount');
+            const latestTimeEl = document.getElementById('latestTime');
+            
+            if (totalCountEl) totalCountEl.textContent = data.length || 0;
+            if (xhsCountEl) xhsCountEl.textContent = xhsData.length || 0;
+            if (douyinCountEl) douyinCountEl.textContent = douyinData.length || 0;
+            
+            if (data.length > 0 && data[0].created_at) {
+                try {
+                    const latest = new Date(data[0].created_at);
+                    if (latestTimeEl) {
+                        latestTimeEl.textContent = latest.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                } catch (e) {
+                    if (latestTimeEl) latestTimeEl.textContent = '--';
+                }
+            } else {
+                if (latestTimeEl) latestTimeEl.textContent = '--';
             }
         }
 
         function updateCharts(data) {
-            const xhsCount = data.filter(d => d.platform === 'xiaohongshu').length
-            const douyinCount = data.filter(d => d.platform === 'douyin').length
+            if (!data || !Array.isArray(data)) {
+                data = [];
+            }
+            
+            const xhsCount = data.filter(d => d && d.platform === 'xiaohongshu').length;
+            const douyinCount = data.filter(d => d && d.platform === 'douyin').length;
 
-            if (platformChart) platformChart.destroy()
-            platformChart = new Chart(document.getElementById('platformChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['小红书', '抖音'],
-                    datasets: [{
-                        data: [xhsCount, douyinCount],
-                        backgroundColor: ['#ff2442', '#00f0ff']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            })
+            const platformChartEl = document.getElementById('platformChart');
+            if (platformChartEl) {
+                if (platformChart) platformChart.destroy();
+                platformChart = new Chart(platformChartEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['小红书', '抖音'],
+                        datasets: [{
+                            data: [xhsCount, douyinCount],
+                            backgroundColor: ['#ff2442', '#00f0ff']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
 
-            const dailyData = {}
+            const dailyData = {};
             data.forEach(item => {
-                const date = new Date(item.created_at).toLocaleDateString('zh-CN')
-                dailyData[date] = (dailyData[date] || 0) + 1
-            })
+                if (item && item.created_at) {
+                    try {
+                        const date = new Date(item.created_at).toLocaleDateString('zh-CN');
+                        dailyData[date] = (dailyData[date] || 0) + 1;
+                    } catch (e) {
+                        // 忽略日期解析错误
+                    }
+                }
+            });
 
-            if (trendChart) trendChart.destroy()
-            trendChart = new Chart(document.getElementById('trendChart'), {
-                type: 'line',
-                data: {
-                    labels: Object.keys(dailyData),
-                    datasets: [{
-                        label: '每日采集量',
-                        data: Object.values(dailyData),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            })
+            const trendChartEl = document.getElementById('trendChart');
+            if (trendChartEl) {
+                if (trendChart) trendChart.destroy();
+                const labels = Object.keys(dailyData).length > 0 ? Object.keys(dailyData) : ['暂无数据'];
+                const values = Object.keys(dailyData).length > 0 ? Object.values(dailyData) : [0];
+                
+                trendChart = new Chart(trendChartEl, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '每日采集量',
+                            data: values,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
         }
 
         function updateTable(data) {
