@@ -58,8 +58,8 @@
         <div class="stats" id="stats">
             <div class="stat-card">
                 <div class="stat-title">📝 总内容数</div>
-                <div class="stat-value" id="totalCount">--</div>
-                <div class="stat-delta">加载中...</div>
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-delta" id="totalDelta">暂无数据</div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">🎨 小红书</div>
@@ -98,7 +98,7 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="4" style="text-align: center; padding: 40px;">加载中...</td></tr>
+                    <tr><td colspan="4" style="text-align: center; padding: 40px; color: #999;">暂无数据，请使用搜索功能爬取数据</td></tr>
                 </tbody>
             </table>
         </div>
@@ -237,8 +237,15 @@
                     return; // 有本地数据就不加载Supabase了
                 }
                 
-                // 如果没有本地数据，尝试从Supabase加载
+                // 如果没有本地数据，尝试从Supabase加载（等待Supabase初始化完成）
                 try {
+                    // 等待Supabase初始化（最多等待2秒）
+                    let waitCount = 0;
+                    while (waitCount < 20 && (!window.supabaseClient || typeof window.supabaseClient.from !== 'function')) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        waitCount++;
+                    }
+                    
                     const supabaseClient = window.supabase || window.supabaseClient;
                     if (supabaseClient && typeof supabaseClient.from === 'function') {
                         console.log('尝试从Supabase加载数据...');
@@ -263,7 +270,7 @@
                             console.log('Supabase中没有数据');
                         }
                     } else {
-                        console.log('Supabase客户端未初始化或不可用');
+                        console.log('Supabase客户端未初始化或不可用（这是正常的，如果不需要Supabase）');
                     }
                 } catch (supabaseError) {
                     console.log('Supabase加载失败（这是正常的，如果未配置）:', supabaseError.message);
