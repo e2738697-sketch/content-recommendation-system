@@ -121,7 +121,14 @@
 
         async function loadData() {
             try {
-                const { data, error } = await (window.supabase || window.supabaseClient)
+                // 获取supabase客户端
+                const supabaseClient = window.supabase || window.supabaseClient;
+                if (!supabaseClient) {
+                    console.warn('Supabase客户端未初始化');
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
                     .from('content_raw')
                     .select('*')
                     .order('created_at', { ascending: false })
