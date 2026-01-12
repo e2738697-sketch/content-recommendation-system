@@ -30,3 +30,8 @@ feishu-python-sdk==1.0.0
 # Utils
 python-dateutil==2.8.2
 loguru==0.7.2
+
+
+# Visualization Dashboard
+streamlit==1.31.0
+plotly==5.18.0
