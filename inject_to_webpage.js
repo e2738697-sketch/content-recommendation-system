@@ -17,12 +17,22 @@
     // API服务地址（如果5000端口被占用，会自动使用5001）
     let API_BASE_URL = 'http://localhost:5000';
     
-    // 尝试检测可用的端口
+    // 尝试检测可用的端口（仅在非GitHub Pages环境下）
     async function detectAPIPort() {
-        const ports = [5000, 5001];
+        // 如果是GitHub Pages（HTTPS），无法访问localhost，跳过检测
+        if (window.location.protocol === 'https:' && window.location.hostname !== 'localhost') {
+            console.log('ℹ️  GitHub Pages环境，跳过localhost检测');
+            console.log('💡 提示：请在本地启动API服务后使用');
+            return;
+        }
+        
+        const ports = [5001, 5000]; // 优先检测5001
         for (const port of ports) {
             try {
-                const response = await fetch(`http://localhost:${port}/api/data/list`, { method: 'GET' });
+                const response = await fetch(`http://localhost:${port}/api/data/list`, { 
+                    method: 'GET',
+                    mode: 'cors'
+                });
                 if (response.ok) {
                     API_BASE_URL = `http://localhost:${port}`;
                     console.log(`✅ 检测到API服务运行在端口 ${port}`);
@@ -32,7 +42,8 @@
                 // 继续尝试下一个端口
             }
         }
-        console.warn('⚠️  未检测到API服务，使用默认端口5000');
+        console.warn('⚠️  未检测到API服务，使用默认端口5001');
+        console.log('💡 提示：请确保API服务正在运行: python3 crawler_api.py');
     }
     
     // 检测API端口
