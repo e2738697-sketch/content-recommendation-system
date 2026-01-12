@@ -105,11 +105,13 @@
 
     <script>
         // Supabase配置 - 使用匿名公钥（安全的，只读权限）
+        // 使用window.supabaseClient避免重复声明
         if (typeof window.supabaseClient === 'undefined') {
             const supabaseUrl = 'https://qxtsitaebqmiphnwmvky.supabase.co'
             const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4dHNpdGFlYnFtaXBobndtdmt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2ODAwMTEsImV4cCI6MjA1MjI1NjAxMX0.KFN_BhYWA_kxPP-L4OkEY24XCnfVIiLWX4v4P8vCFJ4'
             window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey)
         }
+        // 使用已存在的supabaseClient，避免重复声明
         const supabase = window.supabaseClient
 
         let platformChart, trendChart;
