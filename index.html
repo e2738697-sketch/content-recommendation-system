@@ -51,6 +51,9 @@
             </div>
         </div>
         
+        <!-- 内容爬虫搜索接口 -->
+        <div id="crawler-search-container"></div>
+        
         <div class="stats" id="stats">
             <div class="stat-card">
                 <div class="stat-title">📝 总内容数</div>
@@ -198,6 +201,68 @@
         loadData()
         // 每60秒自动刷新一次
         setInterval(loadData, 60000)
+    </script>
+    
+    <!-- 内容爬虫搜索接口脚本 -->
+    <script src="inject_to_webpage.js"></script>
+    <script>
+        // 配置API地址
+        window.API_BASE_URL = window.API_BASE_URL || 'http://localhost:5001';
+        
+        // 增强loadData函数，支持从localStorage读取爬取的数据
+        const originalLoadData = window.loadData;
+        window.loadData = async function() {
+            // 先尝试从localStorage加载爬取的数据
+            try {
+                const localData = JSON.parse(localStorage.getItem('crawled_data') || '[]');
+                if (localData.length > 0) {
+                    console.log(`从本地存储加载 ${localData.length} 条爬取数据`);
+                    updateStats(localData);
+                    updateCharts(localData);
+                    updateTable(localData);
+                    document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                }
+            } catch (e) {
+                console.log('本地数据加载失败:', e);
+            }
+            
+            // 然后尝试从Supabase加载（如果配置了）
+            if (originalLoadData) {
+                try {
+                    await originalLoadData();
+                } catch (e) {
+                    console.log('Supabase加载失败，使用本地数据');
+                }
+            }
+        };
+        
+        // 修改inject_to_webpage.js中的保存函数
+        window.saveCrawlDataToPage = function(notes, keyword) {
+            try {
+                const storageKey = 'crawled_data';
+                let existingData = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                
+                const newData = notes.map(note => ({
+                    id: note.note_id || note.id || Date.now() + Math.random(),
+                    platform: 'xiaohongshu',
+                    created_at: new Date().toISOString(),
+                    keyword: keyword,
+                    raw_data: note
+                }));
+                
+                existingData = [...newData, ...existingData].slice(0, 1000);
+                localStorage.setItem(storageKey, JSON.stringify(existingData));
+                
+                console.log(`✅ 已保存 ${notes.length} 条数据到本地存储`);
+                
+                // 刷新数据
+                if (typeof loadData === 'function') {
+                    setTimeout(loadData, 500);
+                }
+            } catch (error) {
+                console.error('保存数据失败:', error);
+            }
+        };
     </script>
 </body>
 </html>
