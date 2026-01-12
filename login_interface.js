@@ -414,6 +414,28 @@
             });
             
             try {
+                // 如果是GitHub Pages环境，直接保存到localStorage
+                if (window.location.hostname.includes('github.io')) {
+                    const loginData = {
+                        logged_in: true,
+                        login_time: new Date().toISOString(),
+                        cookies: cookiesObj,
+                        user_info: {}
+                    };
+                    localStorage.setItem(`${platform}_login_status`, JSON.stringify(loginData));
+                    
+                    showMessage(`✅ ${platformName}登录状态已保存到本地`, 'success');
+                    document.body.removeChild(dialog);
+                    
+                    // 立即更新界面
+                    updateLoginStatus(platform, true, loginData);
+                    
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = originalText;
+                    return;
+                }
+                
+                // 尝试保存到服务器
                 const response = await fetch(`${API_BASE_URL}/api/login/save`, {
                     method: 'POST',
                     headers: {
@@ -451,7 +473,24 @@
                     showMessage(`保存失败: ${result.message}`, 'error');
                 }
             } catch (error) {
-                showMessage(`保存失败: ${error.message}`, 'error');
+                // 如果API不可用，也保存到localStorage
+                console.log('API保存失败，使用localStorage:', error);
+                const loginData = {
+                    logged_in: true,
+                    login_time: new Date().toISOString(),
+                    cookies: cookiesObj,
+                    user_info: {}
+                };
+                localStorage.setItem(`${platform}_login_status`, JSON.stringify(loginData));
+                
+                showMessage(`✅ ${platformName}登录状态已保存到本地（API不可用）`, 'success');
+                document.body.removeChild(dialog);
+                
+                // 立即更新界面
+                updateLoginStatus(platform, true, loginData);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
             }
         });
         
