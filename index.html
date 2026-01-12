@@ -276,15 +276,18 @@
                 const created_at = item.created_at || item.publish_time || new Date().toISOString();
                 const title = item.title || item.desc || '无标题';
                 const likes = item.liked_count || item.likes || 0;
+                const rawData = item.raw_data ? JSON.stringify(item.raw_data).substring(0, 100) : title;
                 
                 return `
                 <tr>
                     <td><span class="platform-badge ${platform}">${platform === 'xiaohongshu' ? '小红书' : '抖音'}</span></td>
                     <td>${id.length > 8 ? id.substring(0, 8) + '...' : id}</td>
                     <td>${new Date(created_at).toLocaleString('zh-CN')}</td>
-                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${JSON.stringify(item.raw_data).substring(0, 100)}...</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rawData}${rawData.length >= 100 ? '...' : ''}</td>
+                    <td>${likes}</td>
                 </tr>
-            `).join('')
+            `;
+            }).filter(html => html).join('')
         }
 
         // 页面加载时自动获取数据
