@@ -121,27 +121,37 @@
 
         async function loadData() {
             try {
-                // 获取supabase客户端
-                const supabaseClient = window.supabase || window.supabaseClient;
-                if (!supabaseClient) {
-                    console.warn('Supabase客户端未初始化');
-                    return;
+                // 优先从localStorage加载爬取的数据
+                const localData = JSON.parse(localStorage.getItem('crawled_data') || '[]');
+                if (localData.length > 0) {
+                    console.log(`从本地存储加载 ${localData.length} 条数据`);
+                    updateStats(localData);
+                    updateCharts(localData);
+                    updateTable(localData);
+                    document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
                 }
                 
-                const { data, error } = await supabaseClient
-                    .from('content_raw')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-
-                if (error) throw error
-
-                updateStats(data)
-                updateCharts(data)
-                updateTable(data)
-                document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN')
+                // 尝试从Supabase加载（如果配置了且可用）
+                try {
+                    const supabaseClient = window.supabase || window.supabaseClient;
+                    if (supabaseClient && typeof supabaseClient.from === 'function') {
+                        const { data, error } = await supabaseClient
+                            .from('content_raw')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+                        
+                        if (!error && data && data.length > 0) {
+                            updateStats(data);
+                            updateCharts(data);
+                            updateTable(data);
+                            document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+                        }
+                    }
+                } catch (supabaseError) {
+                    console.log('Supabase加载失败，使用本地数据:', supabaseError.message);
+                }
             } catch (error) {
-                console.error('加载数据失败:', error)
-                alert('加载数据失败，请稍后重试')
+                console.error('加载数据失败:', error);
             }
         }
 
