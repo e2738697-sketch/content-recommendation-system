@@ -489,20 +489,41 @@
         
         // 绑定事件
         document.getElementById('save-cookies-btn').addEventListener('click', async () => {
+            const saveBtn = document.getElementById('save-cookies-btn');
+            const originalText = saveBtn.textContent;
+            
             const cookies = document.getElementById('cookies-input').value.trim();
             if (!cookies) {
                 alert('请输入cookies内容');
                 return;
             }
             
+            // 显示保存中状态
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ 保存中...';
+            
             // 解析cookies
             const cookiesObj = {};
             cookies.split(';').forEach(cookie => {
-                const [key, value] = cookie.trim().split('=');
-                if (key && value) {
-                    cookiesObj[key] = value;
+                const trimmed = cookie.trim();
+                if (trimmed) {
+                    const equalIndex = trimmed.indexOf('=');
+                    if (equalIndex > 0) {
+                        const key = trimmed.substring(0, equalIndex);
+                        const value = trimmed.substring(equalIndex + 1);
+                        if (key && value) {
+                            cookiesObj[key] = value;
+                        }
+                    }
                 }
             });
+            
+            if (Object.keys(cookiesObj).length === 0) {
+                alert('❌ 无法解析cookies内容\n\n请确保格式正确，应该是：key1=value1; key2=value2; ...');
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+                return;
+            }
             
             try {
                 // 如果是GitHub Pages环境，直接保存到localStorage
@@ -516,7 +537,9 @@
                     localStorage.setItem(`${platform}_login_status`, JSON.stringify(loginData));
                     
                     showMessage(`✅ ${platformName}登录状态已保存到本地`, 'success');
-                    document.body.removeChild(dialog);
+                    if (dialog.parentNode) {
+                        dialog.parentNode.removeChild(dialog);
+                    }
                     
                     // 立即更新界面
                     updateLoginStatus(platform, true, loginData);
