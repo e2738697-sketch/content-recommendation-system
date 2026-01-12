@@ -18,7 +18,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install supabase-py openai jieba scikit-learn
+          pip install supabase openai jieba scikit-learn
       
       - name: Run tagging script
         env:
