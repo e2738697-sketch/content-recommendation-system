@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容推荐系统 - 数据仪表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 30px; }
+        h1 { color: #667eea; font-size: 32px; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 16px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .stat-title { color: #999; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; }
+        .stat-value { color: #333; font-size: 36px; font-weight: bold; }
+        .stat-delta { color: #10b981; font-size: 14px; margin-top: 5px; }
+        .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-bottom: 30px; }
+        .chart-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .chart-title { font-size: 18px; color: #333; margin-bottom: 20px; font-weight: 600; }
+        .table-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f3f4f6; padding: 15px; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; }
+        td { padding: 15px; border-bottom: 1px solid #e5e7eb; color: #6b7280; }
+        tr:hover { background: #f9fafb; }
+        .platform-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .xiaohongshu { background: #ffe4e6; color: #be123c; }
+        .douyin { background: #dbeafe; color: #1e40af; }
+        .loading { text-align: center; color: white; font-size: 24px; padding: 50px; }
+        .refresh-btn { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s; }
+        .refresh-btn:hover { background: #5568d3; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .last-update { color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="controls">
+                <div>
+                    <h1>📊 内容推荐系统 - 数据仪表板</h1>
+                    <p class="subtitle">实时查看小红书和抖音内容采集数据</p>
+                </div>
+                <div style="text-align: right;">
+                    <button class="refresh-btn" onclick="loadData()">🔄 刷新数据</button>
+                    <div class="last-update" id="lastUpdate">最后更新: --</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-title">📝 总内容数</div>
+                <div class="stat-value" id="totalCount">--</div>
+                <div class="stat-delta">加载中...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">🎨 小红书</div>
+                <div class="stat-value" id="xhsCount">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">🎵 抖音</div>
+                <div class="stat-value" id="douyinCount">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">⏰ 最新采集</div>
+                <div class="stat-value" style="font-size: 20px;" id="latestTime">--</div>
+            </div>
+        </div>
+
+        <div class="charts">
+            <div class="chart-card">
+                <div class="chart-title">平台分布</div>
+                <canvas id="platformChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">每日采集趋势</div>
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="chart-title">最新内容列表</div>
+            <table id="contentTable">
+                <thead>
+                    <tr>
+                        <th>平台</th>
+                        <th>内容ID</th>
+                        <th>采集时间</th>
+                        <th>数据预览</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="4" style="text-align: center; padding: 40px;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Supabase配置 - 使用匿名公钥（安全的，只读权限）
+        const supabaseUrl = 'https://qxtsitaebqmiphnwmvky.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4dHNpdGFlYnFtaXBobndtdmt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2ODAwMTEsImV4cCI6MjA1MjI1NjAxMX0.KFN_BhYWA_kxPP-L4OkEY24XCnfVIiLWX4v4P8vCFJ4'
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
+
+        let platformChart, trendChart;
+
+        async function loadData() {
+            try {
+                const { data, error } = await supabase
+                    .from('content_raw')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+
+                if (error) throw error
+
+                updateStats(data)
+                updateCharts(data)
+                updateTable(data)
+                document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN')
+            } catch (error) {
+                console.error('加载数据失败:', error)
+                alert('加载数据失败，请稍后重试')
+            }
+        }
+
+        function updateStats(data) {
+            const xhsData = data.filter(d => d.platform === 'xiaohongshu')
+            const douyinData = data.filter(d => d.platform === 'douyin')
+            
+            document.getElementById('totalCount').textContent = data.length
+            document.getElementById('xhsCount').textContent = xhsData.length
+            document.getElementById('douyinCount').textContent = douyinData.length
+            
+            if (data.length > 0) {
+                const latest = new Date(data[0].created_at)
+                document.getElementById('latestTime').textContent = latest.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            }
+        }
+
+        function updateCharts(data) {
+            const xhsCount = data.filter(d => d.platform === 'xiaohongshu').length
+            const douyinCount = data.filter(d => d.platform === 'douyin').length
+
+            if (platformChart) platformChart.destroy()
+            platformChart = new Chart(document.getElementById('platformChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['小红书', '抖音'],
+                    datasets: [{
+                        data: [xhsCount, douyinCount],
+                        backgroundColor: ['#ff2442', '#00f0ff']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true }
+            })
+
+            const dailyData = {}
+            data.forEach(item => {
+                const date = new Date(item.created_at).toLocaleDateString('zh-CN')
+                dailyData[date] = (dailyData[date] || 0) + 1
+            })
+
+            if (trendChart) trendChart.destroy()
+            trendChart = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: Object.keys(dailyData),
+                    datasets: [{
+                        label: '每日采集量',
+                        data: Object.values(dailyData),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true }
+            })
+        }
+
+        function updateTable(data) {
+            const tbody = document.getElementById('tableBody')
+            tbody.innerHTML = data.slice(0, 20).map(item => `
+                <tr>
+                    <td><span class="platform-badge ${item.platform}">${item.platform === 'xiaohongshu' ? '小红书' : '抖音'}</span></td>
+                    <td>${item.id.substring(0, 8)}...</td>
+                    <td>${new Date(item.created_at).toLocaleString('zh-CN')}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${JSON.stringify(item.raw_data).substring(0, 100)}...</td>
+                </tr>
+            `).join('')
+        }
+
+        // 页面加载时自动获取数据
+        loadData()
+        // 每60秒自动刷新一次
+        setInterval(loadData, 60000)
+    </script>
+</body>
+</html>
