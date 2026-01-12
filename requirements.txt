@@ -1,0 +1,32 @@
+# Web Scraping
+playwright==1.41.0
+beautifulsoup4==4.12.2
+requests==2.31.0
+firecrawl-py==0.0.10
+
+# Database
+supabase==2.3.0
+pymongo==4.6.1
+psycopg2-binary==2.9.9
+
+# Vector DB
+chromadb==0.4.22
+
+# AI/ML
+openai==1.10.0
+langchain==0.1.4
+transformers==4.36.2
+torch==2.1.2
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.3
+python-dotenv==1.0.0
+pyyaml==6.0.1
+
+# Feishu Integration
+feishu-python-sdk==1.0.0
+
+# Utils
+python-dateutil==2.8.2
+loguru==0.7.2
