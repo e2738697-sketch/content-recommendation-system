@@ -261,12 +261,27 @@
         }
 
         function updateTable(data) {
-            const tbody = document.getElementById('tableBody')
-            tbody.innerHTML = data.slice(0, 20).map(item => `
+            const tbody = document.getElementById('tableBody');
+            if (!tbody) return;
+            
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #999;">暂无数据，请使用搜索功能爬取数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.slice(0, 20).map(item => {
+                if (!item) return '';
+                const platform = item.platform || 'unknown';
+                const id = item.id || item.note_id || 'N/A';
+                const created_at = item.created_at || item.publish_time || new Date().toISOString();
+                const title = item.title || item.desc || '无标题';
+                const likes = item.liked_count || item.likes || 0;
+                
+                return `
                 <tr>
-                    <td><span class="platform-badge ${item.platform}">${item.platform === 'xiaohongshu' ? '小红书' : '抖音'}</span></td>
-                    <td>${item.id.substring(0, 8)}...</td>
-                    <td>${new Date(item.created_at).toLocaleString('zh-CN')}</td>
+                    <td><span class="platform-badge ${platform}">${platform === 'xiaohongshu' ? '小红书' : '抖音'}</span></td>
+                    <td>${id.length > 8 ? id.substring(0, 8) + '...' : id}</td>
+                    <td>${new Date(created_at).toLocaleString('zh-CN')}</td>
                     <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${JSON.stringify(item.raw_data).substring(0, 100)}...</td>
                 </tr>
             `).join('')
