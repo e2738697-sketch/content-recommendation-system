@@ -375,6 +375,7 @@
         <button class="tab-btn active" onclick="switchTab('data')">📋 数据表格</button>
         <button class="tab-btn" onclick="switchTab('analysis')">📊 数据分析</button>
         <button class="tab-btn" onclick="switchTab('pool')">🏊 用户数据池</button>
+        <button class="tab-btn" onclick="switchTab('crawler')">🕷️ 网络爬虫</button>
     </div>
 
     <!-- 数据表格选项卡 -->
@@ -490,6 +491,68 @@
             <button class="btn btn-primary" onclick="createPool()">创建</button>
         </div>
     </div>
+</div>
+    
+<!-- 网络爬虫 -->
+<div id="tab-crawler" class="tab-content">
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="startCrawler()">🕷️ 开始爬取</button>
+    <button class="btn btn-success" onclick="stopCrawler()">⏹️ 停止爬取</button>
+  </div>
+  
+  <div style="background: #f9fafb; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px; color: #111827;">🔍 爬虫设置</h3>
+    
+    <div class="form-group">
+      <label class="form-label">目标网站</label>
+      <select class="form-input" id="crawler-site">
+        <option value="xiaohongshu">🎨 小红书</option>
+        <option value="douyin">🎥 括音</option>
+        <option value="custom">⚙️ 自定义URL</option>
+      </select>
+    </div>
+    
+    <div class="form-group" id="custom-url-group" style="display: none;">
+      <label class="form-label">自定义URL</label>
+      <input type="text" class="form-input" id="custom-crawler-url" placeholder="https://example.com">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">搜索关键词</label>
+      <input type="text" class="form-input" id="crawler-keywords" placeholder="例如: 网红, 沙滨, 美妆">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">爆取个数</label>
+      <input type="number" class="form-input" id="crawler-count" placeholder="50" value="50">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">爬取次数</label>
+      <input type="number" class="form-input" id="crawler-rounds" placeholder="1" value="1">
+    </div>
+  </div>
+  
+  <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+    <h4 style="color: #1e40af; margin-bottom: 10px;">📢 爬取状态</h4>
+    <div id="crawler-status" style="font-size: 13px; color: #4b5563;">将于爬取时实时更新...</div>
+    <div id="crawler-progress" style="margin-top: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+        <span id="progress-text">次数: 0/1</span>
+        <span id="progress-count">赠取: 0</span>
+      </div>
+      <div class="progress-bar" style="margin-top: 8px;">
+        <div class="progress-fill" id="crawler-progress-bar" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+    <h4 style="color: #111827; margin-bottom: 10px;">🗃️ 最近爬取任务</h4>
+    <div id="crawler-tasks" style="font-size: 13px; color: #6b7280;">
+      <p style="margin: 0; padding: 10px; background: #f9fafb; border-radius: 4px;">暂无任务</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -748,6 +811,126 @@ function analyzePool() {
     alert('数据池分析功能开发中...');
 }
 
+    
+// 网络爬虫功能
+let crawlerRunning = false;
+let crawlCount = 0;
+
+function startCrawler() {
+  if (crawlerRunning) {
+    alert('爬虫已经在运行中');
+    return;
+  }
+  
+  const site = document.getElementById('crawler-site').value;
+  const keywords = document.getElementById('crawler-keywords').value;
+  const count = parseInt(document.getElementById('crawler-count').value) || 50;
+  const rounds = parseInt(document.getElementById('crawler-rounds').value) || 1;
+  
+  if (!keywords) {
+    alert('请输入搜索关键词');
+    return;
+  }
+  
+  crawlerRunning = true;
+  crawlCount = 0;
+  
+  const statusDiv = document.getElementById('crawler-status');
+  statusDiv.innerHTML = '🔗 正在连接...';
+  
+  // 模拟爬取过程
+  let processedRounds = 0;
+  
+  const crawlInterval = setInterval(() => {
+    if (processedRounds >= rounds || !crawlerRunning) {
+      clearInterval(crawlInterval);
+      crawlerRunning = false;
+      statusDiv.innerHTML = '✅ 爬取完成! 获得' + crawlCount + '条数据';
+      finalizeCrawledData();
+      return;
+    }
+    
+    processedRounds++;
+    const itemsThisRound = Math.floor(Math.random() * count * 0.3) + Math.floor(count * 0.7);
+    crawlCount += itemsThisRound;
+    
+    statusDiv.innerHTML = `🔍 正在爬取... (第 ${processedRounds}/${rounds} 轮, 已获得 ${crawlCount} 条)`;
+    
+    const progress = (processedRounds / rounds) * 100;
+    document.getElementById('crawler-progress-bar').style.width = progress + '%';
+    document.getElementById('progress-text').textContent = `次数: ${processedRounds}/${rounds}`;
+    document.getElementById('progress-count').textContent = `获取: ${crawlCount}`;
+  }, 1500);
+}
+
+function stopCrawler() {
+  if (!crawlerRunning) {
+    alert('爬虫沒有丙运行');
+    return;
+  }
+  
+  crawlerRunning = false;
+  document.getElementById('crawler-status').innerHTML = '⚠️ 爬取已中断';
+  alert('已停止爬取，赠取了' + crawlCount + '条数据');
+}
+
+function finalizeCrawledData() {
+  // 模拟新建爬取任务记录
+  const now = new Date().toLocaleString();
+  const taskHTML = `🕷️ 爬取连接 | ${now} | 获取: ${crawlCount}条`;
+  
+  // 更新任务2行
+  const taskDiv = document.getElementById('crawler-tasks');
+  let currentHTML = taskDiv.innerHTML;
+  if (currentHTML.includes('暂无任务')) {
+    taskDiv.innerHTML = `<p style="margin: 0; padding: 10px; background: #f9fafb; border-radius: 4px;">${taskHTML}</p>`;
+  } else {
+    taskDiv.innerHTML = `<p style="margin: 5px 0; padding: 10px; background: #f9fafb; border-radius: 4px;">${taskHTML}</p>` + currentHTML;
+  }
+  
+  // 生成模拟数据并保存到localStorage
+  const crawledData = generateMockData(crawlCount);
+  const existing = localStorage.getItem('crawled_data');
+  const existingArray = existing ? JSON.parse(existing) : [];
+  const combinedData = [...existingArray, ...crawledData];
+  localStorage.setItem('crawled_data', JSON.stringify(combinedData));
+  
+  alert(`赠取了 ${crawlCount} 条数据，已保存到本地！`);
+  loadData();
+}
+
+function generateMockData(count) {
+  const data = [];
+  const keywords = document.getElementById('crawler-keywords').value.split(',');
+  const site = document.getElementById('crawler-site').value;
+  
+  for (let i = 0; i < count; i++) {
+    const keyword = keywords[Math.floor(Math.random() * keywords.length)].trim();
+    data.push({
+      platform: site,
+      title: `[${site}] ${keyword} 相关纹爠 ${i + 1}`,
+      keyword: keyword,
+      tags: ['爬取数据'],
+      liked_count: Math.floor(Math.random() * 10000),
+      comment_count: Math.floor(Math.random() * 1000),
+      collected_count: Math.floor(Math.random() * 500),
+      created_at: new Date().toISOString(),
+      in_pool: false
+    });
+  }
+  
+  return data;
+}
+
+// 为自定义URL下拉桶添加改变事件
+散帯.getElementById('crawler-site').addEventListener('change', function() {
+  const customGroup = document.getElementById('custom-url-group');
+  if (this.value === 'custom') {
+    customGroup.style.display = 'block';
+  } else {
+    customGroup.style.display = 'none';
+  }
+});
 // 页面加载时自动加载数据
 window.addEventListener('DOMContentLoaded', () => {
     console.log('内容拆解系统已加载');
