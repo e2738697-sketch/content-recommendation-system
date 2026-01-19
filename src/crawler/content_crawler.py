@@ -144,3 +144,17 @@ class ContentCrawler:
             await self.close_session()
         
         return results
+
+    def crawl(self, platform: str, keywords: List[str], count: int = 50, max_pages: int = 1) -> Dict[str, Any]:
+        """Synchronous wrapper for crawling content"""
+        import asyncio
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self.crawl_batch(keywords, [platform]))
+            return {"status": "success", "data": result, "message": f"Crawled {sum(len(v) for v in result.values())} items from {platform}"}
+        except Exception as e:
+            logger.error(f"Error in crawl: {str(e)}")
+            return {"status": "error", "message": str(e)}
+        finally:
+            loop.close()
