@@ -1,0 +1,51 @@
+{
+  "test_cases": [
+    {
+      "name": "小红书内容爬取",
+      "platform": "xiaohongshu",
+      "keywords": [
+        "Python编程",
+        "Web开发",
+        "数据分析",
+        "机器学习",
+        "前端框架"
+      ],
+      "count": 50,
+      "max_pages": 2,
+      "schedule": {
+        "enabled": true,
+        "interval_hours": 6,
+        "description": "每6小时自动爬取一次"
+      }
+    },
+    {
+      "name": "抖音内容爬取",
+      "platform": "douyin",
+      "keywords": [
+        "编程教程",
+        "开发工具",
+        "技术分享",
+        "代码片段",
+        "项目分享"
+      ],
+      "count": 30,
+      "max_pages": 1,
+      "schedule": {
+        "enabled": true,
+        "interval_hours": 12,
+        "description": "每12小时自动爬取一次"
+      }
+    }
+  ],
+  "general_settings": {
+    "timeout": 30,
+    "retries": 3,
+    "proxy_list": [],
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "notification_settings": {
+    "enable_notifications": true,
+    "send_to_feishu": true,
+    "webhook_url": "${FEISHU_WEBHOOK_URL}"
+  }
+}
