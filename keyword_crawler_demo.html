@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关键词爬取器 - 内容推荐系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-add {
+            background: #667eea;
+            color: white;
+        }
+        .btn-add:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+        .keyword-list {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .keyword-list h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .keyword-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .keyword-info {
+            flex: 1;
+        }
+        .keyword-name {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .keyword-meta {
+            color: #999;
+            font-size: 12px;
+        }
+        .keyword-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        .btn-remove:hover {
+            background: #c82333;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 关键词爬取器</h1>
+        <p class="subtitle">输入关键词，系统将重复爬取并为你推荐优质内容</p>
+        
+        <form id="keywordForm">
+            <div class="form-group">
+                <label for="keyword">拍事关键词</label>
+                <input type="text" id="keyword" placeholder="例如：美妆产品、护肤品、旅游等" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="platform">选择平台</label>
+                <select id="platform">
+                    <option value="xiaohongshu">小红书 (Xiaohongshu)</option>
+                    <option value="douyin">抽音 (Douyin)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="interval">爬取间隔（小时）</label>
+                <select id="interval">
+                    <option value="6">6 小时</option>
+                    <option value="12" selected>12 小时</option>
+                    <option value="24">24 小时（每天）</option>
+                    <option value="72">72 小时（每三天）</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn-add">➕ 添加关键词</button>
+                <button type="reset" class="btn-clear">清除表单</button>
+            </div>
+        </form>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="keyword-list">
+            <h3>📄 实时监测</h3>
+            <div id="keywordList">
+                <p style="color: #999; text-align: center; padding: 20px;">还没有添加任何关键词</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 模拟数据 - 应该接受API调用
+        let keywords = JSON.parse(localStorage.getItem('keywords')) || [];
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        }
+        
+        function addKeyword(keyword, platform, interval) {
+            const newKeyword = {
+                id: Date.now(),
+                keyword: keyword,
+                platform: platform,
+                interval: interval,
+                added_at: new Date().toLocaleString('zh-CN')
+            };
+            keywords.push(newKeyword);
+            localStorage.setItem('keywords', JSON.stringify(keywords));
+            renderKeywords();
+            showMessage(`✨ 成功添加关键词：${keyword}，系统将每 ${interval} 小时爬取一次`);
+        }
+        
+        function removeKeyword(id) {
+            keywords = keywords.filter(k => k.id !== id);
+            localStorage.setItem('keywords', JSON.stringify(keywords));
+            renderKeywords();
+            showMessage('✅ 关键词已删除');
+        }
+        
+        function renderKeywords() {
+            const list = document.getElementById('keywordList');
+            if (keywords.length === 0) {
+                list.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">还没有添加任何关键词</p>';
+                return;
+            }
+            
+            list.innerHTML = keywords.map(k => `
+                <div class="keyword-item">
+                    <div class="keyword-info">
+                        <div class="keyword-name"><span class="keyword-status status-active">正在监测</span> ${k.keyword}</div>
+                        <div class="keyword-meta">🎨 ${k.platform} | ⏰ 每 ${k.interval} 小时 | ✏️ ${k.added_at}</div>
+                    </div>
+                    <button type="button" class="btn-remove" onclick="removeKeyword(${k.id})">\u00d7 删除</button>
+                </div>
+            `).join('');
+        }
+        
+        document.getElementById('keywordForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const keyword = document.getElementById('keyword').value.trim();
+            const platform = document.getElementById('platform').value;
+            const interval = document.getElementById('interval').value;
+            
+            if (keyword) {
+                addKeyword(keyword, platform, interval);
+                e.target.reset();
+            }
+        });
+        
+        // 页面加载时渲染
+        renderKeywords();
+        
+        // 模拟已执行的爬取（欣示）
+        console.log('%c🚀 内容推荐系统已启动', 'color: #667eea; font-size: 14px; font-weight: bold;');
+        console.log('%c正在为你监测关键词并爬取优质内容...', 'color: #666; font-size: 12px;');
+    </script>
+</body>
+</html>
