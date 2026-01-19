@@ -25,8 +25,16 @@ try:
     from src.ai.tagging_engine import TaggingEngine
     from src.integration.feishu_api import FeishuAPI
     from src.crawler.content_crawler import ContentCrawler
+        ContentCrawler = None  # Will be loaded below
 except ImportError as e:
     logging.warning(f"Some modules not fully initialized: {e}")
+
+# Try to import ContentCrawler specifically
+try:
+    from src.crawler.content_crawler import ContentCrawler
+except Exception as e:
+    logger.error(f"Failed to import ContentCrawler: {e}")
+    ContentCrawler = None
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
